@@ -47,9 +47,10 @@
 
 <div class="container">
   <h2>Заказать подвоз</h2>
-    <div class="form-group">
+  
+  <div class="form-group">
     <label for="badge">Бейдж сотрудника</label>
-    <!-- type="text" в паре с inputmode выдает полноценную цифровую клавиатуру без лишних стрелок -->
+    <!-- Вызывает цифровую клавиатуру на iOS/Android и блокирует ввод любых букв -->
     <input 
       type="text" 
       id="badge" 
@@ -59,20 +60,33 @@
       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
     >
   </div>
+  
+  <div class="form-group">
+    <label for="square">Выгрузить в квадрат</label>
+    <select id="square">
+      <option value="">Загрузка списка...</option>
+    </select>
+  </div>
+  
+  <button class="btn" id="btnSubmit" onclick="submitOrder()">Отправить заявку</button>
+</div>
+
 <script>
-  // Настройки ссылок
+  // ЗАМЕНИТЕ ЭТУ СТРОКУ НА ВАШ URL ИЗ GOOGLE APPS SCRIPT (заканчивается на /exec)
   const API_URL = "https://script.google.com/macros/s/AKfycbwFHgSJUyeHczRzbCRzUeGKpd1s28zA8h1zFv28hDp7oEtVZkF_3Rs2LErPpO67fYj7-A/exec"; 
-  const SQUARES_JSON_URL = "squares.json"; // Файл лежит в том же репозитории
+  
+  // Файл лежит в том же репозитории на GitHub
+  const SQUARES_JSON_URL = "squares.json"; 
 
   window.onload = function() {
     loadSquares();
   };
 
-  // Загружаем список квадратов напрямую с GitHub без участия Google скриптов
+  // Загрузка списка квадратов напрямую из файла на GitHub
   function loadSquares() {
     fetch(SQUARES_JSON_URL)
       .then(res => {
-        if (!res.ok) throw new Error('Файл со списком квадратов не найден');
+        if (!res.ok) throw new Error('Не удалось загрузить squares.json');
         return res.json();
       })
       .then(squares => {
@@ -86,18 +100,23 @@
       })
       .catch(err => {
         document.getElementById('square').innerHTML = '<option value="">Ошибка загрузки</option>';
-        console.error(err);
+        console.error('Ошибка чтения списка квадратов:', err);
       });
   }
 
+  // Отправка данных формы в Google Таблицу
   function submitOrder() {
     let badge = document.getElementById('badge').value.trim();
     let square = document.getElementById('square').value;
     let btn = document.getElementById('btnSubmit');
     
-    if(!badge || !square) { alert('Заполните все поля!'); return; }
+    if(!badge || !square) { 
+      alert('Пожалуйста, заполните бейдж и выберите квадрат!'); 
+      return; 
+    }
     
-    btn.disabled = true; btn.innerText = 'Отправка...';
+    btn.disabled = true; 
+    btn.innerText = 'Отправка...';
 
     let formBody = new URLSearchParams();
     formBody.append('action', 'addOrder');
@@ -110,13 +129,16 @@
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formBody
     }).then(() => {
-      alert('Заявка отправлена!');
+      alert('Заявка успешно отправлена!');
       document.getElementById('badge').value = '';
       document.getElementById('square').value = '';
-      btn.disabled = false; btn.innerText = 'Отправить заявку';
+      btn.disabled = false; 
+      btn.innerText = 'Отправить заявку';
     }).catch(err => {
-      alert('Ошибка отправки');
-      btn.disabled = false; btn.innerText = 'Отправить заявку';
+      alert('Произошла ошибка сети при отправке.');
+      btn.disabled = false; 
+      btn.innerText = 'Отправить заявку';
+      console.error(err);
     });
   }
 </script>
