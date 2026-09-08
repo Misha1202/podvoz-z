@@ -61,37 +61,34 @@
 </div>
 
 <script>
-  // СЮДА ВСТАВЬТЕ СВОЙ URL ИЗ GOOGLE APPS SCRIPT
+  // Настройки ссылок
   const API_URL = "https://script.google.com/macros/s/AKfycbwFHgSJUyeHczRzbCRzUeGKpd1s28zA8h1zFv28hDp7oEtVZkF_3Rs2LErPpO67fYj7-A/exec"; 
+  const SQUARES_JSON_URL = "squares.json"; // Файл лежит в том же репозитории
 
   window.onload = function() {
     loadSquares();
   };
 
-  function jsonp(url, callbackName, successCallback) {
-    window[callbackName] = function(data) {
-      successCallback(data);
-      document.getElementById(callbackName).remove();
-      delete window[callbackName];
-    };
-    let script = document.createElement('script');
-    script.id = callbackName;
-    script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
-    document.body.appendChild(script);
-  }
-
+  // Загружаем список квадратов напрямую с GitHub без участия Google скриптов
   function loadSquares() {
-    jsonp(`${API_URL}?action=getSquares`, 'cb_squares', function(response) {
-      if(response.success) {
+    fetch(SQUARES_JSON_URL)
+      .then(res => {
+        if (!res.ok) throw new Error('Файл со списком квадратов не найден');
+        return res.json();
+      })
+      .then(squares => {
         let select = document.getElementById('square');
         select.innerHTML = '<option value="">Выберите квадрат</option>';
-        response.data.forEach(sq => {
+        squares.forEach(sq => {
           let opt = document.createElement('option');
           opt.value = sq; opt.innerText = sq;
           select.appendChild(opt);
         });
-      }
-    });
+      })
+      .catch(err => {
+        document.getElementById('square').innerHTML = '<option value="">Ошибка загрузки</option>';
+        console.error(err);
+      });
   }
 
   function submitOrder() {
