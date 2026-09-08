@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заказ подвоза</title>
+  <style>
+    :root {
+      --bg-main: #0f0c1b;
+      --bg-card: #18142c;
+      --primary: #8a2be2;
+      --accent-green: #00f5d4;
+      --accent-green-hover: #01c7ac;
+      --text-main: #f3f0ff;
+      --text-muted: #a39fbc;
+      --border: #2e2754;
+    }
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      margin: 0; padding: 15px;
+      background-color: var(--bg-main); color: var(--text-main);
+      display: flex; justify-content: center; align-items: center; min-height: 95vh;
+    }
+    .container {
+      width: 100%; max-width: 460px;
+      background: var(--bg-card); padding: 30px;
+      border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 1px 1px var(--border);
+      box-sizing: border-box;
+    }
+    h2 { margin-top: 0; margin-bottom: 25px; font-size: 24px; font-weight: 600; text-align: center; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-muted); }
+    input, select {
+      width: 100%; padding: 14px; background: var(--bg-main); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-main); font-size: 16px; box-sizing: border-box;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+    .btn {
+      width: 100%; padding: 16px; background: var(--accent-green); color: #05040a;
+      border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Заказать подвоз</h2>
+  <div class="form-group">
+    <label for="badge">Бейдж сотрудника</label>
+    <input type="text" id="badge" placeholder="Введите номер">
+  </div>
+  <div class="form-group">
+    <label for="square">Выгрузить в квадрат</label>
+    <select id="square">
+      <option value="">Загрузка списка...</option>
+    </select>
+  </div>
+  <button class="btn" id="btnSubmit" onclick="submitOrder()">Отправить заявку</button>
+</div>
+
+<script>
+  // СЮДА ВСТАВЬТЕ СВОЙ URL ИЗ GOOGLE APPS SCRIPT
+  const API_URL = "https://script.google.com/macros/s/AKfycbwFHgSJUyeHczRzbCRzUeGKpd1s28zA8h1zFv28hDp7oEtVZkF_3Rs2LErPpO67fYj7-A/exec"; 
+
+  window.onload = function() {
+    loadSquares();
+  };
+
+  function jsonp(url, callbackName, successCallback) {
+    window[callbackName] = function(data) {
+      successCallback(data);
+      document.getElementById(callbackName).remove();
+      delete window[callbackName];
+    };
+    let script = document.createElement('script');
+    script.id = callbackName;
+    script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
+    document.body.appendChild(script);
+  }
+
+  function loadSquares() {
+    jsonp(`${API_URL}?action=getSquares`, 'cb_squares', function(response) {
+      if(response.success) {
+        let select = document.getElementById('square');
+        select.innerHTML = '<option value="">Выберите квадрат</option>';
+        response.data.forEach(sq => {
+          let opt = document.createElement('option');
+          opt.value = sq; opt.innerText = sq;
+          select.appendChild(opt);
+        });
+      }
+    });
+  }
+
+  function submitOrder() {
+    let badge = document.getElementById('badge').value.trim();
+    let square = document.getElementById('square').value;
+    let btn = document.getElementById('btnSubmit');
+    
+    if(!badge || !square) { alert('Заполните все поля!'); return; }
+    
+    btn.disabled = true; btn.innerText = 'Отправка...';
+
+    let formBody = new URLSearchParams();
+    formBody.append('action', 'addOrder');
+    formBody.append('badge', badge);
+    formBody.append('square', square);
+
+    fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formBody
+    }).then(() => {
+      alert('Заявка отправлена!');
+      document.getElementById('badge').value = '';
+      document.getElementById('square').value = '';
+      btn.disabled = false; btn.innerText = 'Отправить заявку';
+    }).catch(err => {
+      alert('Ошибка отправки');
+      btn.disabled = false; btn.innerText = 'Отправить заявку';
+    });
+  }
+</script>
+</body>
+</html>
