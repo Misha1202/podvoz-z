@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Управление подвозом</title>
+  <title>Заказ подвоза</title>
   <style>
     :root {
       --bg-main: #0f0c1b;
       --bg-card: #18142c;
       --primary: #8a2be2;
-      --primary-hover: #9d4edd;
-      --accent-orange: #ff5400;
-      --accent-blue: #70d6ff;
-      --accent-red: #ff4757;
-      --accent-red-hover: #ff6b81;
+      --accent-green: #00f5d4;
+      --accent-green-hover: #01c7ac;
       --text-main: #f3f0ff;
       --text-muted: #a39fbc;
       --border: #2e2754;
@@ -28,200 +25,103 @@
       width: 100%; max-width: 460px;
       background: var(--bg-card); padding: 30px;
       border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 1px 1px var(--border);
-      box-sizing: border-box; position: relative;
+      box-sizing: border-box;
     }
-    .header-area {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    h2 { margin-top: 0; margin-bottom: 25px; font-size: 24px; font-weight: 600; text-align: center; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-muted); }
+    input, select {
+      width: 100%; padding: 14px; background: var(--bg-main); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-main); font-size: 16px; box-sizing: border-box;
     }
-    h2 { margin: 0; font-size: 24px; font-weight: 600; }
-    .btn-refresh {
-      background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main);
-      border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;
-    }
-    .btn-refresh:hover { border-color: var(--primary); background: #1c1536; }
-    .btn-refresh svg { width: 16px; height: 16px; fill: currentColor; transition: transform 0.4s ease; }
-    .btn-refresh.loading svg { animation: spin 0.8s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .square-display {
-      font-size: 72px; font-weight: 800; text-align: center; margin-top: 30px; margin-bottom: 5px;
-      background: linear-gradient(45deg, #b5179e, #7209b7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .badge-display {
-      text-align: center; font-size: 18px; color: var(--text-muted); margin-bottom: 35px; font-weight: 500;
-    }
-    .badge-display span { color: var(--accent-blue); font-weight: 700; }
-    .actions-block {
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .btn-done {
-      width: 100%; padding: 18px; background: var(--primary); color: var(--text-main);
-      border: none; border-radius: 10px; font-size: 18px; cursor: pointer; font-weight: 700;
-      transition: background 0.2s;
-    }
-    .btn-done:hover { background: var(--primary-hover); }
-    .btn-exit {
-      width: 100%; padding: 14px; background: transparent; color: var(--accent-red);
-      border: 1px solid var(--border); border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 600;
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+    .btn {
+      width: 100%; padding: 16px; background: var(--accent-green); color: #05040a;
+      border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: 700;
       transition: all 0.2s;
     }
-    .btn-exit:hover { background: rgba(255, 71, 87, 0.1); border-color: var(--accent-red); }
-    .no-orders { text-align: center; font-size: 18px; color: var(--text-muted); padding: 50px 0; }
-    .modal {
-      display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-      background: rgba(7, 5, 14, 0.8); backdrop-filter: blur(4px); justify-content: center; align-items: center;
-    }
-    .modal-content {
-      background: var(--bg-card); padding: 30px; border-radius: 16px; text-align: center;
-      max-width: 360px; width: 100%; border: 1px solid var(--border);
-    }
-    .modal-btns { display: flex; gap: 15px; margin-top: 25px; }
-    .btn-modal { flex: 1; padding: 18px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; }
-    .btn-kgt { background: var(--accent-orange); color: white; }
-    .btn-std { background: var(--accent-blue); color: #05040a; }
+    .btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="header-area">
-    <h2 id="screen-title">Текущее задание</h2>
-    <button class="btn-refresh" id="btnRefresh" onclick="loadNextOrder()">
-      <svg viewBox="0 0 24 24">
-        <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-      </svg>
-      Обновить
-    </button>
+  <h2>Заказать подвоз</h2>
+  
+  <div class="form-group">
+    <label for="badge">Бейдж сотрудника</label>
+    <!-- Вызывает цифровую клавиатуру на iOS/Android и блокирует ввод любых букв -->
+    <input 
+      type="text" 
+      id="badge" 
+      inputmode="numeric" 
+      pattern="[0-9]*" 
+      placeholder="Введите номер бейджа"
+      oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+    >
   </div>
-
-  <div id="order-box">
-    <div class="square-display" id="current-square">...</div>
-    <div class="badge-display">Бейдж заказа: <span id="current-badge">...</span></div>
-    
-    <div class="actions-block">
-      <button class="btn-done" onclick="showModal()">Готово</button>
-      <button class="btn-exit" id="btnExit" onclick="handleWorkExit()">Завершить работу</button>
-    </div>
+  
+  <div class="form-group">
+    <label for="square">Выгрузить в квадрат</label>
+    <select id="square">
+      <option value="">Загрузка списка...</option>
+    </select>
   </div>
-
-  <div id="empty-box" class="no-orders" style="display:none;">
-    ✨ Все задания выполнены!
-    <button class="btn-exit" style="margin-top:25px;" onclick="setWorkFinishedMode()">Завершить работу</button>
-  </div>
-
-  <div id="finished-box" class="no-orders" style="display:none;">
-    🛑 Работа успешно завершена.<br>Смена закрыта.
-    <button class="btn-done" style="margin-top:25px; font-size:15px; padding:12px;" onclick="restartWork()">Начать работу заново</button>
-  </div>
-</div>
-
-<div id="typeModal" class="modal">
-  <div class="modal-content">
-    <h3>Выберите тип груза</h3>
-    <div class="modal-btns">
-      <button class="btn-modal btn-kgt" onclick="selectType('КГТ')">КГТ</button>
-      <button class="btn-modal btn-std" onclick="selectType('Стандарт')">Стандарт</button>
-    </div>
-  </div>
+  
+  <button class="btn" id="btnSubmit" onclick="submitOrder()">Отправить заявку</button>
 </div>
 
 <script>
-  const API_URL = "ВАШ_URL_ИЗ_GOOGLE_APPS_SCRIPT"; 
-
-  let currentOrderRow = null;
-  let isExitingWork = false;
+  // ЗАМЕНИТЕ ЭТУ СТРОКУ НА ВАШ URL ИЗ GOOGLE APPS SCRIPT (заканчивается на /exec)
+  const API_URL = "https://script.google.com/macros/s/AKfycbwFHgSJUyeHczRzbCRzUeGKpd1s28zA8h1zFv28hDp7oEtVZkF_3Rs2LErPpO67fYj7-A/exec"; 
+  
+  // Файл лежит в том же репозитории на GitHub
+  const SQUARES_JSON_URL = "squares.json"; 
 
   window.onload = function() {
-    loadNextOrder();
+    loadSquares();
   };
 
-  window.addEventListener('beforeunload', function (e) {
-    if (currentOrderRow) {
-      e.preventDefault();
-      e.returnValue = 'У вас есть активное задание!';
-    }
-  });
-
-  function jsonp(url, callbackName, successCallback) {
-    const uniqueCallback = callbackName + '_' + Math.round(Math.random() * 1000000);
-    window[uniqueCallback] = function(data) {
-      successCallback(data);
-      document.getElementById(uniqueCallback).remove();
-      delete window[uniqueCallback];
-    };
-    let script = document.createElement('script');
-    script.id = uniqueCallback;
-    script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + uniqueCallback;
-    document.body.appendChild(script);
+  // Загрузка списка квадратов напрямую из файла на GitHub
+  function loadSquares() {
+    fetch(SQUARES_JSON_URL)
+      .then(res => {
+        if (!res.ok) throw new Error('Не удалось загрузить squares.json');
+        return res.json();
+      })
+      .then(squares => {
+        let select = document.getElementById('square');
+        select.innerHTML = '<option value="">Выберите квадрат</option>';
+        squares.forEach(sq => {
+          let opt = document.createElement('option');
+          opt.value = sq; opt.innerText = sq;
+          select.appendChild(opt);
+        });
+      })
+      .catch(err => {
+        document.getElementById('square').innerHTML = '<option value="">Ошибка загрузки</option>';
+        console.error('Ошибка чтения списка квадратов:', err);
+      });
   }
 
-  function loadNextOrder() {
-    if (document.getElementById('finished-box').style.display === 'block') return;
-
-    const refreshBtn = document.getElementById('btnRefresh');
-    const squareDiv = document.getElementById('current-square');
-    const badgeSpan = document.getElementById('current-badge');
+  // Отправка данных формы в Google Таблицу
+  function submitOrder() {
+    let badge = document.getElementById('badge').value.trim();
+    let square = document.getElementById('square').value;
+    let btn = document.getElementById('btnSubmit');
     
-    refreshBtn.classList.add('loading');
-    refreshBtn.disabled = true;
-
-    var sendRow = currentOrderRow ? currentOrderRow : "";
-    if (squareDiv.innerText !== '...') squareDiv.innerText = '...';
-    if (badgeSpan.innerText !== '...') badgeSpan.innerText = '...';
-
-    jsonp(`${API_URL}?action=getOldest&currentFormRow=${sendRow}`, 'cb_oldest', function(response) {
-      refreshBtn.classList.remove('loading');
-      refreshBtn.disabled = false;
-
-      if(response.success && response.data) {
-        currentOrderRow = response.data.row;
-        squareDiv.innerText = response.data.square;
-        badgeSpan.innerText = response.data.badge || 'Не указан';
-        document.getElementById('order-box').style.display = 'block';
-        document.getElementById('empty-box').style.display = 'none';
-        document.getElementById('finished-box').style.display = 'none';
-      } else {
-        currentOrderRow = null;
-        document.getElementById('order-box').style.display = 'none';
-        document.getElementById('empty-box').style.display = 'block';
-        document.getElementById('finished-box').style.display = 'none';
-      }
-    });
-  }
-
-  function handleWorkExit() {
-    if (currentOrderRow) {
-      isExitingWork = true;
-      showModal();
-    } else {
-      setWorkFinishedMode();
+    if(!badge || !square) { 
+      alert('Пожалуйста, заполните бейдж и выберите квадрат!'); 
+      return; 
     }
-  }
-
-  function showModal() { 
-    if(currentOrderRow) document.getElementById('typeModal').style.display = 'flex'; 
-  }
-
-  document.getElementById('typeModal').addEventListener('click', function(e) {
-    if(e.target === this) {
-      this.style.display = 'none';
-      isExitingWork = false;
-    }
-  });
-
-  function selectType(type) {
-    document.getElementById('typeModal').style.display = 'none';
-    if(!currentOrderRow) return;
     
-    document.getElementById('current-square').innerText = '...';
-    document.getElementById('current-badge').innerText = '...';
+    btn.disabled = true; 
+    btn.innerText = 'Отправка...';
 
     let formBody = new URLSearchParams();
-    formBody.append('action', 'completeOrder');
-    formBody.append('row', currentOrderRow);
-    formBody.append('type', type);
-
-    currentOrderRow = null;
+    formBody.append('action', 'addOrder');
+    formBody.append('badge', badge);
+    formBody.append('square', square);
 
     fetch(API_URL, {
       method: 'POST',
@@ -229,31 +129,17 @@
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formBody
     }).then(() => {
-      if (isExitingWork) {
-        setWorkFinishedMode();
-      } else {
-        setTimeout(loadNextOrder, 400); 
-      }
+      alert('Заявка успешно отправлена!');
+      document.getElementById('badge').value = '';
+      document.getElementById('square').value = '';
+      btn.disabled = false; 
+      btn.innerText = 'Отправить заявку';
     }).catch(err => {
-      alert('Ошибка сети при обновлении статуса');
+      alert('Произошла ошибка сети при отправке.');
+      btn.disabled = false; 
+      btn.innerText = 'Отправить заявку';
+      console.error(err);
     });
-  }
-
-  function setWorkFinishedMode() {
-    currentOrderRow = null;
-    isExitingWork = false;
-    document.getElementById('order-box').style.display = 'none';
-    document.getElementById('empty-box').style.display = 'none';
-    document.getElementById('btnRefresh').style.display = 'none';
-    document.getElementById('screen-title').style.display = 'none';
-    document.getElementById('finished-box').style.display = 'block';
-  }
-
-  function restartWork() {
-    document.getElementById('finished-box').style.display = 'none';
-    document.getElementById('btnRefresh').style.display = 'flex';
-    document.getElementById('screen-title').style.display = 'block';
-    loadNextOrder();
   }
 </script>
 </body>
